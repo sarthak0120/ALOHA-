@@ -1,65 +1,49 @@
 import numpy as np
 
-num_nodes = 10
-transmission_time = 12
-num_transmissions_done = 0
+# Initialize Parameters
+serviced = []
+IAT = []
+ST = 12
+AT = []
 
-total_time = int(input("Enter total simulation time: "))
-N = int(input("Enter N: "))
 
-channel_busy = False
+# Input Parameters
+total_time = int(input("Enter Total Time: "))
+IAT_rate = int(input("Enter IAT Rate: "))
 
-waiting = [0 for i in range(num_nodes)]
-k = [0 for i in range(num_nodes)]
 
-curr_sender = None
-curr_start_time = None
+num_processes = np.random.poisson(IAT_rate)
+num_processes_served = 0
 
-p_send = 2.718**(-N/(num_nodes*transmission_time))*(N/(num_nodes*transmission_time))
+# Populate Inter-Arrival-Times (IAT)
+for i in range(num_processes):
+    temp = int(np.random.exponential(IAT_rate))
 
-for i in range(total_time):
-    random = []
-    sending = []
-    num_senders = 0
-    temp=0
+    if i==0:
+        IAT.append(0)
+    else:
+        IAT.append(temp)
+
+
+# Get Arrival-Times (AT) from IAT starting at t=0
+# and initialize Waiting-Times to 0
+for i in range(num_processes):
+    if i == 0:
+        AT.append(0)    
+    else:
+        AT.append(AT[i-1] + IAT[i])
+
+# Simulation of M/M/1 Queue (i represents current time)
+
+end_time = -1
+
+for i in range(total_time):    
+    for j in range(num_processes):
+        if i == j and i>end_time:
+            serviced.append(i)
+            num_processes_served = num_processes_served + 1
+            end_time = i + ST
+            break
     
-    
-    
-    for j in range(num_nodes):
-        random.append(np.random.rand())
-        
-    for j in range(num_nodes):
-        if j == curr_sender :
-            continue
-        
-        if random[j]<p_send:
-            sending.append(1)
-            num_senders = num_senders + 1
-            temp = j
-        else:
-            sending.append(0)
-    
-    if channel_busy and i == curr_start_time + transmission_time:
-        channel_busy = False
-        curr_sender = curr_start_time = None
-        num_transmissions_done +=1
-        
-    if not channel_busy and num_senders ==1 :
-        channel_busy = True
-        curr_sender = temp
-        curr_start_time = i
-    
-    elif num_senders>= 1:
-        for item in range(num_nodes):
-            if sending[item]==1:
-                k[item]=k[item]+1
-        
-                waiting[item] = i + np.random.randint(2**k[item]-1)*transmission_time
-        if channel_busy:
-            k[curr_sender] = k[curr_sender] + 1
-            waiting[curr_sender] = i + np.random.randint(2**k-1)*transmission_time
-        
-        channel_busy = False
-        curr_sender = None
-        curr_start_time = None
-        
+print ("Throughput is: ", num_processes_served/total_time)
+                
